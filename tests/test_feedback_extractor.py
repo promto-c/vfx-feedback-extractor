@@ -7,7 +7,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from vfx_feedback_extractor.feedback_extractor import extract_info_from_message
 
-
 class TestFeedbackExtractor(unittest.TestCase):
     def test_extract_info_from_message(self):
         email_1 = """
@@ -15,9 +14,9 @@ class TestFeedbackExtractor(unittest.TestCase):
 
         I have reviewed the shot named as 
 
-        `SH020_080_222_v002`
+        SH020_080_222_v002
         - It seems that it requires color correction.
-        `SH010_040_111_v001`
+        SH010_040_111_v001
         -  I noticed that it needs a bit more brightness. Can we fix this? 
 
         Annotation is attached at these locations 
@@ -33,9 +32,9 @@ class TestFeedbackExtractor(unittest.TestCase):
 
         I have reviewed the shot named as 
 
-        `001c020_082_v002`
+        001c020_082_v002
         - It seems that it requires color correction.
-        `001c030_041_v001`
+        001c030_041_v001
         -  I noticed that it needs a bit more brightness. Can we fix this? 
 
         Annotation is attached at these locations 
@@ -71,10 +70,10 @@ class TestFeedbackExtractor(unittest.TestCase):
 
         I've reviewed the provided shots. Here are my comments:
 
-        `Sc220_500_111_version2`
+        Sc220_500_111_version2
         - I think the animation speed needs to be increased slightly. 
 
-        `Scene180_400_090_v07001`
+        Scene180_400_090_v07001
         - Could you add more texture to the background? 
 
         Here are the annotations:
@@ -86,12 +85,12 @@ class TestFeedbackExtractor(unittest.TestCase):
         """
 
         email_5 = """
-        `SHOT001_v1` - This is the first version of Shot 001.
+        SHOT001_v1 - This is the first version of Shot 001.
         Attachments:
         - /path/to/attachment1.jpg
         - /path/to/attachment2.mov
 
-        `SHOT002_v2` - Updated version of Shot 002.
+        SHOT002_v2 - Updated version of Shot 002.
         Notes:
         - This version includes some minor changes.
         Attachments:

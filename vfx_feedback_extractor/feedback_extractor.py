@@ -46,6 +46,8 @@ def extract_file_paths(note: str) -> List[str]:
 
 def extract_info_from_message(message: str) -> List[Dict[str, str]]:
     """Extracts shot information and attachments from the given message."""
+    message = message.replace(' `', '`')
+    
     # Updated pattern to include optional service_name and convert version to int
     pattern = r"\b`?([A-Z0-9_]+_[A-Z0-9_]+_[A-Z0-9_]+)(_[^`]+)?_v(\d+)`?\b"
     matches = re.findall(pattern, message)

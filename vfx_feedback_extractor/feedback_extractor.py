@@ -46,8 +46,8 @@ def extract_file_paths(note: str) -> List[str]:
 
 def extract_info_from_message(message: str) -> List[Dict[str, str]]:
     """Extracts shot information and attachments from the given message."""
-    # Updated pattern to include possibility of backticks
-    pattern = r"\b`?([A-Z0-9_]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)_v(\d+)`?\b"
+    # Updated pattern to include optional service_name and convert version to int
+    pattern = r"\b`?([A-Z0-9_]+_[A-Z0-9_]+_[A-Z0-9_]+)(_[^`]+)?_v(\d+)`?\b"
     matches = re.findall(pattern, message)
 
     info_list = []
@@ -58,7 +58,7 @@ def extract_info_from_message(message: str) -> List[Dict[str, str]]:
     all_attachments = extract_file_paths(message)
 
     for match in matches:
-        shot_name, detail, service_name, version_name = match
+        shot_name, service_name, version_name = match
         if current_shot is not None:
             info_list.append({
                 "shot_name": current_shot,
@@ -71,18 +71,18 @@ def extract_info_from_message(message: str) -> List[Dict[str, str]]:
 
         current_shot = shot_name
         current_version = version_name
-        current_version_name = f"{shot_name}_{detail}_{service_name}_v{version_name}"
+        # Construct version_name with or without service_name
+        current_version_name = f"{shot_name}{service_name}_v{version_name}" if service_name else f"{shot_name}_v{version_name}"
         current_note = None
 
         # Find the note for the current shot
-        # Added backticks to the pattern
         note_pattern = r"`?{}`?[\s-]*(.*?)($|\n)".format(current_version_name)
         note_match = re.search(note_pattern, message, re.MULTILINE)
         if note_match:
             current_note = note_match.group(1).strip()
 
         # Match attachments to the shot by scanning all attachments
-        current_attachment = [path for path in all_attachments if shot_name in path]
+        current_attachment = [path for path in all_attachments if current_shot in path]
 
     if current_shot is not None:
         info_list.append({

@@ -47,7 +47,7 @@ def extract_file_paths(note: str) -> List[str]:
 def extract_info_from_message(message: str) -> List[Dict[str, str]]:
     """Extracts shot information and attachments from the given message."""
     # Updated pattern to include possibility of backticks
-    pattern = r"\b`?([A-Z0-9_]+)_([A-Za-z0-9]+)`?\b"
+    pattern = r"\b`?([A-Z0-9_]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)_v(\d+)`?\b"
     matches = re.findall(pattern, message)
 
     info_list = []
@@ -58,11 +58,12 @@ def extract_info_from_message(message: str) -> List[Dict[str, str]]:
     all_attachments = extract_file_paths(message)
 
     for match in matches:
-        shot_name, version_name = match
+        shot_name, detail, service_name, version_name = match
         if current_shot is not None:
             info_list.append({
                 "shot_name": current_shot,
-                "version_name": current_version,
+                "version": int(current_version),
+                "version_name": current_version_name,
                 "note": current_note,
                 "attachment": current_attachment
             })
@@ -70,11 +71,12 @@ def extract_info_from_message(message: str) -> List[Dict[str, str]]:
 
         current_shot = shot_name
         current_version = version_name
+        current_version_name = f"{shot_name}_{detail}_{service_name}_v{version_name}"
         current_note = None
 
         # Find the note for the current shot
         # Added backticks to the pattern
-        note_pattern = r"`?{}`?[\s-]*(.*?)($|\n)".format("_".join(match))
+        note_pattern = r"`?{}`?[\s-]*(.*?)($|\n)".format(current_version_name)
         note_match = re.search(note_pattern, message, re.MULTILINE)
         if note_match:
             current_note = note_match.group(1).strip()
@@ -85,7 +87,8 @@ def extract_info_from_message(message: str) -> List[Dict[str, str]]:
     if current_shot is not None:
         info_list.append({
             "shot_name": current_shot,
-            "version_name": current_version,
+            "version": int(current_version),
+            "version_name": current_version_name,
             "note": current_note,
             "attachment": current_attachment
         })

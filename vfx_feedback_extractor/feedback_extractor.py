@@ -44,9 +44,10 @@ def extract_file_paths(note: str) -> List[str]:
 
     return clean_paths
 
-def extract_info_from_message(message: str) -> List[dict]:
+def extract_info_from_message(message: str) -> List[Dict[str, str]]:
     """Extracts shot information and attachments from the given message."""
-    pattern = r"\b([A-Z0-9_]+)_([A-Za-z0-9]+)\b"
+    # Updated pattern to include possibility of backticks
+    pattern = r"\b`?([A-Z0-9_]+)_([A-Za-z0-9]+)`?\b"
     matches = re.findall(pattern, message)
 
     info_list = []
@@ -72,14 +73,15 @@ def extract_info_from_message(message: str) -> List[dict]:
         current_note = None
 
         # Find the note for the current shot
-        note_pattern = r"{}[\s-]*(.*?)($|\n)".format("_".join(match))
+        # Added backticks to the pattern
+        note_pattern = r"`?{}`?[\s-]*(.*?)($|\n)".format("_".join(match))
         note_match = re.search(note_pattern, message, re.MULTILINE)
         if note_match:
             current_note = note_match.group(1).strip()
 
         # Match attachments to the shot by scanning all attachments
         current_attachment = [path for path in all_attachments if shot_name in path]
-        
+
     if current_shot is not None:
         info_list.append({
             "shot_name": current_shot,

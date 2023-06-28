@@ -44,56 +44,63 @@ def extract_file_paths(note: str) -> List[str]:
 
     return clean_paths
 
-def extract_info_from_message(message: str) -> List[Dict[str, str]]:
+def extract_info_from_message(message: str) -> List[Dict[str, Union[str, int]]]:
     """Extracts shot information and attachments from the given message."""
-    message = message.replace(' `', '`')
-    
-    # Updated pattern to include optional service_name and convert version to int
-    pattern = r"\b`?([A-Z0-9_]+_[A-Z0-9_]+_[A-Z0-9_]+)(_[^`]+)?_v(\d+)`?\b"
-    matches = re.findall(pattern, message)
+    pattern = r"\b\s*`?([A-Z0-9_]+_[A-Z0-9_]+_[A-Z0-9_]+)(_[^`]+)?_v(\d+)\s*`?\b"
+    note_patterns = [r":\s*(.*)", r"-->\s*(.*)", r"\n\s*(.*)"]
+
+    # Find all file paths in the message
+    all_paths = extract_file_paths(message)
 
     info_list = []
     current_shot = None
-    current_attachment = []
+    current_note = None
 
-    # Get a list of all attachment paths
-    all_attachments = extract_file_paths(message)
+    # Process each line individually
+    for line in message.split('\n'):
+        line = line.strip()  # Remove leading/trailing white spaces
 
-    for match in matches:
-        shot_name, service_name, version_name = match
-        if current_shot is not None:
-            info_list.append({
-                "shot_name": current_shot,
-                "version": int(current_version),
-                "version_name": current_version_name,
-                "note": current_note,
-                "attachment": current_attachment
-            })
-            current_attachment = []
+        # If the line is empty, ignore it
+        if not line:
+            continue
 
-        current_shot = shot_name
-        current_version = version_name
-        # Construct version_name with or without service_name
-        current_version_name = f"{shot_name}{service_name}_v{version_name}" if service_name else f"{shot_name}_v{version_name}"
-        current_note = None
+        # Check if the line contains a shot
+        match = re.search(pattern, line)
+        if match:
+            # If there's a current shot and it has a note, add it to the list
+            if current_shot and current_note:
+                current_shot['note'] = current_note
+                info_list.append(current_shot)
 
-        # Find the note for the current shot
-        note_pattern = r"`?{}`?[\s-]*(.*?)($|\n)".format(current_version_name)
-        note_match = re.search(note_pattern, message, re.MULTILINE)
-        if note_match:
-            current_note = note_match.group(1).strip()
+            # Create a new shot
+            shot_name, service_name, version_name = match.groups()
+            current_shot = {
+                "shot_name": shot_name,
+                "version": int(version_name),
+                "version_name": f"{shot_name}{service_name}_v{version_name}" if service_name else f"{shot_name}_v{version_name}",
+                "attachment": []
+            }
+            current_note = None  # Reset the current note
 
-        # Match attachments to the shot by scanning all attachments
-        current_attachment = [path for path in all_attachments if current_shot in path]
+            # Check if the line contains a note after the shot
+            for note_pattern in note_patterns:
+                note_match = re.search(note_pattern, line)
+                if note_match:
+                    current_note = note_match.group(1).strip()
+        else:
+            # If the line does not contain a shot, it could be a note or an attachment path
+            if any(path in line for path in all_paths):  # Check if the line is an attachment path
+                pass
+            elif not current_note:  # If there's no current note, it could be a note
+                current_note = line
 
-    if current_shot is not None:
-        info_list.append({
-            "shot_name": current_shot,
-            "version": int(current_version),
-            "version_name": current_version_name,
-            "note": current_note,
-            "attachment": current_attachment
-        })
+        if current_shot:
+            current_shot["attachment"] = [path for path in all_paths if current_shot['shot_name'] in path]
+
+    # Add the last shot to the list, if it exists
+    if current_shot and current_note:
+        current_shot['note'] = current_note
+        info_list.append(current_shot)
 
     return info_list
 

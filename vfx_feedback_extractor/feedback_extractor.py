@@ -1,3 +1,4 @@
+import os
 import re
 
 from typing import Any, Dict, List, Union
@@ -32,7 +33,7 @@ def extract_file_paths(note: str) -> List[str]:
     ['C:/Users/John/Documents/projectA_update.txt', '/home/lisa/documents/budget_proposal.pdf', 'D:/Projects/project_B', '/home/daniel/images/review/', 'E:/Archives/OldProjects/']
     """
     pattern = r"[a-zA-Z]:[\\/][^:\n]*|\/(?!\s)[^:\n]*"
-    matches = re.findall(pattern, note)
+    matches = re.findall(pattern, note.replace(os.sep, '/'))
 
     # Regular expression pattern for non-alphanumeric characters in paths
     non_alphanumeric_pattern = r"[^a-zA-Z0-9:/\\.\\-_]"
@@ -44,10 +45,10 @@ def extract_file_paths(note: str) -> List[str]:
 
     return clean_paths
 
-def extract_info_from_message(message: str) -> List[Dict[str, Union[str, int]]]:
+def extract_info_from_message(message: str, shot_pattern: str = '[A-Za-z0-9_]+_[A-Za-z0-9_]+_[A-Za-z0-9_]+') -> List[Dict[str, Union[str, int]]]:
     """Extracts shot information and attachments from the given message."""
-    pattern = r"\b\s*`?([A-Za-z0-9_]+_[A-Za-z0-9_]+_[A-Za-z0-9_]+)(_[^`]+)?_(v|version)(\d+)\s*`?\b"
-    note_patterns = [r":\s*(.*)", r"-->\s*(.*)", r"\n\s*(.*)"]
+    pattern = fr"\b\s*`?({shot_pattern})(_[^`]+)?_(v|version)(\d+)\s*`?\b"
+    note_pattern = r":\s*(.*)|-->\s*(.*)|\n\s*(.*)"
 
     # Find all file paths in the message
     all_paths = extract_file_paths(message)
@@ -83,10 +84,9 @@ def extract_info_from_message(message: str) -> List[Dict[str, Union[str, int]]]:
             current_note = None  # Reset the current note
 
             # Check if the line contains a note after the shot
-            for note_pattern in note_patterns:
-                note_match = re.search(note_pattern, line)
-                if note_match:
-                    current_note = note_match.group(1).strip().lstrip('-').strip()
+            note_matches = re.findall(note_pattern, line)
+            if note_matches:
+                current_note = max(note_matches[0], key=len).strip().lstrip('-').strip()
         else:
             # If the line does not contain a shot, it could be a note or an attachment path
             if any(path in line for path in all_paths):  # Check if the line is an attachment path
@@ -111,27 +111,15 @@ if __name__ == "__main__":
     doctest.testmod()
 
     message = """
-        Regarding the recent feedback:
+        SHOT001_00_110_v1 - This is the first version of Shot 001.
+        Attachments:
+        - /path/to/attachment1.jpg
+        - /path/to/attachment2.mov
 
-        `SHT101_200_040_v001 `
-        Approved.
-
-        SHT101_300_005_v003
-            - Approved.
-
-        The color appears to be incorrect.
-        SHT100_005_020_v000 
-        SHT100_015_030_fg01_v000 
-        SHT100_015_045_bg01_v000 
-        SHT100_025_100_v000 
-
-        See notes on the below some elements
-
-        SHT102_204_005_comp_service_v0000 
-            - There seems to be an issue with the lighting. It appears inconsistent and uneven.
-
-        SHT102_204_070_comp_service_v0000 
-            - Discontinuity at frame 1100 and 1201-1217.
+        SHOT002_00_100_v2 - This version includes some minor changes.
+        Attachments:
+        - /path/to/attachment3.png
+        - /path/to/attachment4.mp4
         """
 
     extracted_data = extract_info_from_message(message)

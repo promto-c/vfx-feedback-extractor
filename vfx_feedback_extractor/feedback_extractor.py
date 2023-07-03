@@ -110,6 +110,7 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
+    # TODO: fix for this case
     message = """
         SHOT001_00_110_v1 - This is the first version of Shot 001.
         Attachments:

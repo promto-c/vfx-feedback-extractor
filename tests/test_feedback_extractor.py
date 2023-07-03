@@ -47,14 +47,12 @@ class TestFeedbackExtractor(unittest.TestCase):
         """
 
         message_3 = """
-        SHOT001_v1 - This is the first version of Shot 001.
+        SHOT001_00_110_v1 - This is the first version of Shot 001.
         Attachments:
         - /path/to/attachment1.jpg
         - /path/to/attachment2.mov
 
-        SHOT002_v2 - Updated version of Shot 002.
-        Notes:
-        - This version includes some minor changes.
+        SHOT002_00_100_v2 - This version includes some minor changes.
         Attachments:
         - /path/to/attachment3.png
         - /path/to/attachment4.mp4
@@ -129,8 +127,9 @@ class TestFeedbackExtractor(unittest.TestCase):
 
         expected_output_3 = [
             {
-                "shot_name": "SHOT001",
-                "version_name": "v1",
+                "shot_name": "SHOT001_00_110",
+                "version": 1,
+                "version_name": "SHOT001_00_110_v1",
                 "note": "This is the first version of Shot 001.",
                 "attachment": [
                     "/path/to/attachment1.jpg",
@@ -138,9 +137,10 @@ class TestFeedbackExtractor(unittest.TestCase):
                 ],
             },
             {
-                "shot_name": "SHOT002",
-                "version_name": "v2",
-                "note": "Updated version of Shot 002. This version includes some minor changes.",
+                "shot_name": "SHOT002_00_100",
+                "version": 2,
+                "version_name": "SHOT002_00_100_v2",
+                "note": "This version includes some minor changes.",
                 "attachment": [
                     "/path/to/attachment3.png",
                     "/path/to/attachment4.mp4",
